@@ -1,0 +1,6 @@
+{
+    "name": "i2btech-ansible-collection",
+    "dockerComposeFile": ["docker-compose.yml"],
+    "service": "devcontainer",
+    "workspaceFolder": "/workspace/src"
+}
