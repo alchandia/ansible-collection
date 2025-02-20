@@ -1,7 +1,7 @@
 {   
-    "python.defaultInterpreterPath": "ansi-venv/bin/python3",
+    "python.defaultInterpreterPath": "/usr/bin/python3",
     "python.linting.enabled": true,
-    "python.linting.pylintPath": "ansi-venv/bin/pylint",
+    "python.linting.pylintPath": "/home/ubuntu/.local/bin/pylint",
     "python.linting.pylintEnabled": true,
-    "ansible.python.interpreterPath": "ansi-venv/bin/python3"
+    "ansible.python.interpreterPath": "/usr/bin/python3"
 }
