@@ -19,5 +19,12 @@ RUN \
     chown -R ubuntu:ubuntu /home/ubuntu/.vscode-server
 
 USER ubuntu
+
+COPY --chown=ubuntu:ubuntu --chmod=755 .devcontainer/start.sh /home/ubuntu/start.sh
+COPY ../src/requirements.txt /home/ubuntu/requirements.txt
+RUN \
+  pip3 -q install -r /home/ubuntu/requirements.txt --break-system-packages --no-warn-script-location && \
+  pip3 cache purge
+
 WORKDIR /workspace/src
-ENTRYPOINT ["/bin/bash","-c","sleep infinity"]
+ENTRYPOINT ["/home/ubuntu/start.sh"]

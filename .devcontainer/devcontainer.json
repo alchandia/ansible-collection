@@ -2,5 +2,6 @@
     "name": "i2btech-ansible-collection",
     "dockerComposeFile": ["docker-compose.yml"],
     "service": "devcontainer",
-    "workspaceFolder": "/workspace/src"
+    "workspaceFolder": "/workspace/src",
+    "initializeCommand": "sh $PWD/.devcontainer/initialize-cmd.sh",
 }

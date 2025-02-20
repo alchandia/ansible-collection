@@ -3,4 +3,6 @@ services:
     image: i2btech/ansible-collection
     volumes:
       - ..:/workspace
+      - $HOME/.ssh:/home/ubuntu/.ssh
+      - $HOME/.vscode-server/extensions:/home/ubuntu/.vscode-server/extensions
     hostname: devcontainer
