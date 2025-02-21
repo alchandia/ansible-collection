@@ -7,37 +7,51 @@ __metaclass__ = type
 
 DOCUMENTATION = r'''
 ---
-module: gws_signout
+module: gws_signature
 
-short_description: Close session of users
+short_description: Set signature
 
 # If this is part of a collection, you need to use semantic versioning,
 # i.e. the version is of the form "2.5.0" and not "2.4".
 version_added: "1.0.0"
 
-description: Close session of specific users or group of users.
+description: Set email signature for specific users or group of users.
 
 options:
-    used_by:
-        description:
-          - User in the domain with access to use the service account.
-        type: str
-        required: true
     credential_file:
         description:
-          - Path to the credential file associated with the service account, we assume the json file is in the same location of the playbook.
+            - Path to the credential file associated with the service account, we assume the json file is in the same location of the playbook.
         type: str
         required: true
         default: 'credential.json'
+    signature_file:
+        description:
+          - Full path to the jinja2 template.
+        type: str
+        required: true
+    current_users:
+        description:
+            - A list of users that exists in the domain.
+        type: list
+        elements: dict
+        required: true
+        default: []
+    current_groups:
+        description:
+            - A list of groups that exists in the domain.
+        type: list
+        elements: dict
+        required: true
+        default: []
     users:
         description:
-          - A list of users.
+          - A list of users to update their signature.
         type: list
         elements: str
         required: false
     groups:
         description:
-          - A list of groups.
+          - A list of groups to update their signature.
         type: list
         elements: str
         required: false
@@ -47,9 +61,11 @@ author:
 '''
 
 EXAMPLES = r'''
-- name: Close all sessions
-    i2btech.ops.gws_signout:
-    used_by: "admin@i2btech.com"
+- name: Set signature for users/groups
+    i2btech.ops.gws_signature:
+    current_users: "{{ gws_users }}"
+    current_groups: "{{ gws_groups }}"
+    signature_file: "/workspace/src/tests/signature.j2"
     users:
         - "user.name@i2btech.com"
     groups:
@@ -61,7 +77,7 @@ message:
     description: Message associated with result of the action.
     type: str
     returned: always
-    sample: 'All sessions closed'
+    sample: 'Signatures updated'
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -70,8 +86,10 @@ from ansible_collections.i2btech.ops.plugins.module_utils.google_workspace impor
 def run_module():
     # define available arguments/parameters a user can pass to the module
     module_args = dict(
-        used_by=dict(type="str", required=True),
-        credential_file=dict(type="str", required=True, default="credential.json"),
+        credential_file=dict(type="str", default="credential.json"),
+        signature_file=dict(type="str", required=True),
+        current_users=dict(type="list", required=True, elements="dict"),
+        current_groups=dict(type="list", required=True, elements="dict"),
         users=dict(type="list", elements="str", required=False, default=[]),
         groups=dict(type="list", elements="str", required=False, default=[])
     )
@@ -104,11 +122,11 @@ def run_module():
 
 
     gws = GoogleWorkspaceHelper(module)
-    result_signout = gws.signout_users()
+    result_signature = gws.apply_signature()
 
-    result['message'] = result_signout["message"]
-    result['changed'] = result_signout["changed"]
-    result['failed'] = result_signout["failed"]
+    result['message'] = result_signature["message"]
+    result['changed'] = result_signature["changed"]
+    result['failed'] = result_signature["failed"]
 
 
     # during the execution of the module, if there is an exception or a

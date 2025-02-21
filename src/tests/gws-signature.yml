@@ -1,0 +1,21 @@
+- name: "Apply signature to users/groups in Google Workspace"
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  become: false
+
+  vars_files:
+
+    - vars/gws.yml
+
+  tasks:
+
+    - name: Test module
+      i2btech.ops.gws_signature:
+        current_users: "{{ gws_users }}"
+        current_groups: "{{ gws_groups }}"
+        signature_file: "/workspace/src/tests/signature.j2"
+        users:
+          - "user.name@i2btech.com"
+        groups:
+          - "group.users@i2btech.com"
