@@ -1,0 +1,19 @@
+- name: "Signout users/groups from Google Workspace"
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  become: false
+
+  vars_files:
+
+    - vars/vars.yml
+
+  tasks:
+
+    - name: Test module
+      i2btech.ops.gws_signout:
+        used_by: "admin@i2btech.com"
+        users:
+          - "user@i2btech.com"
+        groups:
+          - "group@i2btech.com"
