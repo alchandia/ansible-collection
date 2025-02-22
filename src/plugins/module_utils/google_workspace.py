@@ -5,11 +5,9 @@ Util class for google_workspace
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
 from jinja2 import Environment, FileSystemLoader
-from pathlib import Path
 
 #
 # class: GoogleWorkspaceHelper
@@ -168,16 +166,3 @@ class GoogleWorkspaceHelper:
             result_signature['message'].append("Signatures updated")
 
         return result_signature
-
-
-    def group_create_update(self):
-
-        result = {
-            "changed": False,
-            "failed": False,
-            "message": []
-        }
-
-        result["message"] = "OK"
-
-        return result

@@ -67,7 +67,7 @@ message:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.i2btech.ops.plugins.module_utils.google_workspace import GoogleWorkspaceHelper
+from ansible_collections.i2btech.ops.plugins.module_utils.google_workspace_group import GoogleWorkspaceGroupHelper
 
 def run_module():
     # define available arguments/parameters a user can pass to the module
@@ -105,8 +105,8 @@ def run_module():
         module.exit_json(**result)
 
 
-    gws = GoogleWorkspaceHelper(module)
-    result_group = gws.group_create_update()
+    gws = GoogleWorkspaceGroupHelper(module)
+    result_group = gws.check_config()
 
     result['message'] = result_group["message"]
     result['changed'] = result_group["changed"]

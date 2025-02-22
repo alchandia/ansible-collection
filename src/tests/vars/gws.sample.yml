@@ -25,7 +25,7 @@ gws_groups:
 
 gws_group_types:
   - name: external # anyone in and outside the organization
-    properties:
+    settings:
       - whoCanJoin: "INVITED_CAN_JOIN"
         whoCanAdd: "ALL_MANAGERS_CAN_ADD"
         whoCanInvite: "ALL_MANAGERS_CAN_INVITE"
@@ -35,7 +35,7 @@ gws_group_types:
         whoCanViewGroup: "ALL_MEMBERS_CAN_VIEW"
         whoCanPostMessage: "ANYONE_CAN_POST"
   - name: private # only group members
-    properties:
+    settings:
       - whoCanJoin: "INVITED_CAN_JOIN"
         whoCanAdd: "ALL_MANAGERS_CAN_ADD"
         whoCanInvite: "ALL_MANAGERS_CAN_INVITE"
@@ -45,7 +45,7 @@ gws_group_types:
         whoCanViewGroup: "ALL_MEMBERS_CAN_VIEW"
         whoCanPostMessage: "ALL_MEMBERS_CAN_POST"
   - name: public # anyone in the organization
-    properties:
+    settings:
       - whoCanJoin: "INVITED_CAN_JOIN"
         whoCanAdd: "ALL_MANAGERS_CAN_ADD"
         whoCanInvite: "ALL_MANAGERS_CAN_INVITE"
