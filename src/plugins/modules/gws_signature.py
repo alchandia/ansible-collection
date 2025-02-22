@@ -24,9 +24,11 @@ options:
         type: str
         required: true
         default: 'credential.json'
-    signature_file:
+    signature_folder:
         description:
-          - Full path to the jinja2 template.
+          - Full path to folder where jinja2 template of signature is located.
+          - We use the option 'signature' from the properties of the user to set the filename.
+          - The template need to use '.j2' extension
         type: str
         required: true
     current_users:
@@ -65,7 +67,7 @@ EXAMPLES = r'''
     i2btech.ops.gws_signature:
     current_users: "{{ gws_users }}"
     current_groups: "{{ gws_groups }}"
-    signature_file: "/workspace/src/tests/signature.j2"
+    signature_folder: "{{ playbook_dir }}/templates/signatures"
     users:
         - "user.name@i2btech.com"
     groups:
@@ -87,7 +89,7 @@ def run_module():
     # define available arguments/parameters a user can pass to the module
     module_args = dict(
         credential_file=dict(type="str", default="credential.json"),
-        signature_file=dict(type="str", required=True),
+        signature_folder=dict(type="str", required=True),
         current_users=dict(type="list", required=True, elements="dict"),
         current_groups=dict(type="list", required=True, elements="dict"),
         users=dict(type="list", elements="str", required=False, default=[]),

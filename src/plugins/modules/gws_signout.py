@@ -71,7 +71,7 @@ def run_module():
     # define available arguments/parameters a user can pass to the module
     module_args = dict(
         used_by=dict(type="str", required=True),
-        credential_file=dict(type="str", required=True, default="credential.json"),
+        credential_file=dict(type="str", default="credential.json"),
         users=dict(type="list", elements="str", required=False, default=[]),
         groups=dict(type="list", elements="str", required=False, default=[])
     )

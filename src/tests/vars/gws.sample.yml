@@ -1,0 +1,22 @@
+---
+gws_users:
+  - mail: user.name@i2btech.com
+    full_name: "User Name"
+    title: "Consultor"
+    signature: "chile"
+    phone: "555 55555"
+  - mail: other.user@i2btech.com
+    full_name: "Other User"
+    title: "Consultor"
+    signature: "colombia"
+
+gws_groups:
+  - mail: group.users@i2btech.com
+    name: "Groups Name"
+    members:
+      - user.name@i2btech.com
+  - mail: other.group@i2btech.com
+    name: "Other Group"
+    members:
+      - user.name@i2btech.com
+      - other.user@i2btech.com
