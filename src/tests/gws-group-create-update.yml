@@ -1,0 +1,19 @@
+- name: "Create/update a group in Google Workspace"
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  become: false
+
+  vars_files:
+
+    # create this file using vars/gws.sample.yml as base
+    - vars/gws.yml
+
+  tasks:
+
+    - name: Test module
+      i2btech.ops.gws_group_management:
+        groups_definition: "{{ gws_groups }}"
+        groups_types: "{{ gws_group_types }}"
+        groups:
+          - group.users@i2btech.com

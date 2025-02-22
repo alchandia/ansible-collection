@@ -6,7 +6,7 @@
 
   vars_files:
 
-    # create this base on vars/gws.sample.yml
+    # create this file using vars/gws.sample.yml as base
     - vars/gws.yml
 
   tasks:

@@ -13,10 +13,44 @@ gws_users:
 gws_groups:
   - mail: group.users@i2btech.com
     name: "Groups Name"
+    type: public
     members:
       - user.name@i2btech.com
   - mail: other.group@i2btech.com
     name: "Other Group"
+    type: private
     members:
       - user.name@i2btech.com
       - other.user@i2btech.com
+
+gws_group_types:
+  - name: external # anyone in and outside the organization
+    properties:
+      - whoCanJoin: "INVITED_CAN_JOIN"
+        whoCanAdd: "ALL_MANAGERS_CAN_ADD"
+        whoCanInvite: "ALL_MANAGERS_CAN_INVITE"
+        whoCanViewMembership: "ALL_MEMBERS_CAN_VIEW"
+        allowExternalMembers: 'false'
+        whoCanContactOwner: "ALL_IN_DOMAIN_CAN_CONTACT"
+        whoCanViewGroup: "ALL_MEMBERS_CAN_VIEW"
+        whoCanPostMessage: "ANYONE_CAN_POST"
+  - name: private # only group members
+    properties:
+      - whoCanJoin: "INVITED_CAN_JOIN"
+        whoCanAdd: "ALL_MANAGERS_CAN_ADD"
+        whoCanInvite: "ALL_MANAGERS_CAN_INVITE"
+        whoCanViewMembership: "ALL_MEMBERS_CAN_VIEW"
+        allowExternalMembers: 'false'
+        whoCanContactOwner: "ALL_IN_DOMAIN_CAN_CONTACT"
+        whoCanViewGroup: "ALL_MEMBERS_CAN_VIEW"
+        whoCanPostMessage: "ALL_MEMBERS_CAN_POST"
+  - name: public # anyone in the organization
+    properties:
+      - whoCanJoin: "INVITED_CAN_JOIN"
+        whoCanAdd: "ALL_MANAGERS_CAN_ADD"
+        whoCanInvite: "ALL_MANAGERS_CAN_INVITE"
+        whoCanViewMembership: "ALL_MEMBERS_CAN_VIEW"
+        allowExternalMembers: 'false'
+        whoCanContactOwner: "ALL_IN_DOMAIN_CAN_CONTACT"
+        whoCanViewGroup: "ALL_IN_DOMAIN_CAN_VIEW"
+        whoCanPostMessage: "ALL_IN_DOMAIN_CAN_POST"

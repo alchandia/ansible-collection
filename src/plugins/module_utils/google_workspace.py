@@ -168,3 +168,16 @@ class GoogleWorkspaceHelper:
             result_signature['message'].append("Signatures updated")
 
         return result_signature
+
+
+    def group_create_update(self):
+
+        result = {
+            "changed": False,
+            "failed": False,
+            "message": []
+        }
+
+        result["message"] = "OK"
+
+        return result
