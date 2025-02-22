@@ -24,6 +24,11 @@ options:
         type: str
         required: true
         default: 'credential.json'
+    action:
+        description:
+          - Action to perform: check|create_update
+        type: str
+        required: true
     groups_definition:
         description:
             - A list of groups.
@@ -73,6 +78,7 @@ def run_module():
     # define available arguments/parameters a user can pass to the module
     module_args = dict(
         credential_file=dict(type="str", default="credential.json"),
+        action=dict(type="str", required=True),
         groups_definition=dict(type="list", required=True, elements="dict"),
         groups_types=dict(type="list", required=True, elements="dict"),
         groups=dict(type="list", elements="str", required=False, default=[])
@@ -106,11 +112,18 @@ def run_module():
 
 
     gws = GoogleWorkspaceGroupHelper(module)
-    result_group = gws.check_config()
 
-    result['message'] = result_group["message"]
-    result['changed'] = result_group["changed"]
-    result['failed'] = result_group["failed"]
+    result_action = {
+        "changed": False,
+        "failed": False,
+        "message": []
+    }
+    if module.params['action'] == "check":
+        result_action = gws.check_config()
+
+    result['message'] = result_action["message"]
+    result['changed'] = result_action["changed"]
+    result['failed'] = result_action["failed"]
 
 
     # during the execution of the module, if there is an exception or a

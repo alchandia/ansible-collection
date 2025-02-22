@@ -59,17 +59,30 @@ class GoogleWorkspaceGroupHelper:
 
         for group in self.module.params['groups']:
             group_definition = next((sub for sub in self.module.params['groups_definition'] if sub['mail'] == group), None)
+            if group_definition is None:
+                result["failed"] = True
+                result["message"] = "Group definition don't exist "
+                return result
+
             types_definition = next((sub for sub in self.module.params['groups_types'] if sub['name'] == group_definition["type"]), None)
+            if types_definition is None:
+                result["failed"] = True
+                result["message"] = "Group type definition don't exist "
+                return result
 
             settings_definition = types_definition["settings"][0]
             settings_current = self.get_settings(service, group)
             if settings_definition != settings_current:
                 result["failed"] = True
+                settings = {
+                    "current": settings_current,
+                    "definition": settings_definition
+                }
+                result["message"].append(settings)
+            else:
+                result["message"] = "Definition and current settings match"
 
-            result["message"].append(settings_definition)
-            result["message"].append(settings_current)
-
-        return result
+            return result
 
 
     def get_settings(self, service, group):
