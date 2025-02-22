@@ -13,11 +13,13 @@ gws_users:
 gws_groups:
   - mail: group.users@i2btech.com
     name: "Groups Name"
+    description: "This is Groups Name"
     type: public
     members:
       - user.name@i2btech.com
   - mail: other.group@i2btech.com
     name: "Other Group"
+    description: "This is Other Group"
     type: private
     members:
       - user.name@i2btech.com

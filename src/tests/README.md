@@ -40,4 +40,5 @@ To execute the modules run one of the following commands:
 ansible-playbook gws-user-management.yml -t signature
 ansible-playbook gws-user-management.yml -t signout
 ansible-playbook gws-group-management.yml -t check
+ansible-playbook gws-group-management.yml -t create_update
 ```

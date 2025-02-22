@@ -29,6 +29,11 @@ options:
           - Action to perform: check|create_update
         type: str
         required: true
+    used_by:
+        description:
+          - User in the domain with access to use the service account.
+        type: str
+        required: false
     groups_definition:
         description:
             - A list of groups.
@@ -80,6 +85,7 @@ def run_module():
     module_args = dict(
         credential_file=dict(type="str", default="credential.json"),
         action=dict(type="str", required=True),
+        used_by=dict(type="str", required=False),
         groups_definition=dict(type="list", required=True, elements="dict"),
         groups_types=dict(type="list", required=True, elements="dict"),
         groups=dict(type="list", elements="str", required=False, default=[])
@@ -121,6 +127,8 @@ def run_module():
     }
     if module.params['action'] == "check":
         result_action = gws.check_config()
+    if module.params['action'] == "create_update":
+        result_action = gws.create_update()
 
     result['message'] = result_action["message"]
     result['changed'] = result_action["changed"]
