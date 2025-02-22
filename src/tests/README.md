@@ -37,5 +37,7 @@ Follow [this steps](https://stackoverflow.com/a/72022166) to configure authentic
 To execute the modules run one of the following commands:
 
 ```
-ansible-playbook gws-signout.yml
+ansible-playbook gws-user-management.yml -t signature
+ansible-playbook gws-user-management.yml -t signout
+ansible-playbook gws-group-management.yml -t check
 ```

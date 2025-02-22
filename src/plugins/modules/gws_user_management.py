@@ -7,15 +7,15 @@ __metaclass__ = type
 
 DOCUMENTATION = r'''
 ---
-module: gws_signature
+module: gws_user_management
 
-short_description: Set signature
+short_description: Manage users in domain
 
 # If this is part of a collection, you need to use semantic versioning,
 # i.e. the version is of the form "2.5.0" and not "2.4".
 version_added: "1.0.0"
 
-description: Set email signature for specific users or group of users.
+description: Create/update, logout, set email signature for specific users or group of users.
 
 options:
     credential_file:
@@ -24,26 +24,36 @@ options:
         type: str
         required: true
         default: 'credential.json'
+    action:
+        description:
+          - Action to perform: signature|signout
+        type: str
+        required: true
+    used_by:
+        description:
+          - User in the domain with access to use the service account.
+        type: str
+        required: false
     signature_folder:
         description:
           - Full path to folder where jinja2 template of signature is located.
           - We use the option 'signature' from the properties of the user to set the filename.
           - The template need to use '.j2' extension
         type: str
-        required: true
-    current_users:
+        required: false
+    users_definition:
         description:
             - A list of users that exists in the domain.
         type: list
         elements: dict
-        required: true
+        required: false
         default: []
-    current_groups:
+    groups_definition:
         description:
             - A list of groups that exists in the domain.
         type: list
         elements: dict
-        required: true
+        required: false
         default: []
     users:
         description:
@@ -63,15 +73,27 @@ author:
 '''
 
 EXAMPLES = r'''
-- name: Set signature for users/groups
-    i2btech.ops.gws_signature:
-    current_users: "{{ gws_users }}"
-    current_groups: "{{ gws_groups }}"
+- name: Test action signout
+    i2btech.ops.gws_user_management:
+    action: "signout"
+    used_by: "admin@i2btech.com"
+    users:
+        - "user@i2btech.com"
+    groups:
+        - "group@i2btech.com"
+    tags: signout
+
+- name: Test action signature
+    i2btech.ops.gws_user_management:
+    action: "signature"
+    users_definition: "{{ gws_users }}"
+    groups_definition: "{{ gws_groups }}"
     signature_folder: "{{ playbook_dir }}/templates/signatures"
     users:
         - "user.name@i2btech.com"
     groups:
         - "group.users@i2btech.com"
+    tags: signature
 '''
 
 RETURN = r'''
@@ -83,15 +105,17 @@ message:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.i2btech.ops.plugins.module_utils.google_workspace import GoogleWorkspaceHelper
+from ansible_collections.i2btech.ops.plugins.module_utils.google_workspace_user import GoogleWorkspaceUserHelper
 
 def run_module():
     # define available arguments/parameters a user can pass to the module
     module_args = dict(
         credential_file=dict(type="str", default="credential.json"),
-        signature_folder=dict(type="str", required=True),
-        current_users=dict(type="list", required=True, elements="dict"),
-        current_groups=dict(type="list", required=True, elements="dict"),
+        action=dict(type="str", required=True),
+        used_by=dict(type="str", required=False),
+        signature_folder=dict(type="str", required=False),
+        users_definition=dict(type="list", required=False, elements="dict"),
+        groups_definition=dict(type="list", required=False, elements="dict"),
         users=dict(type="list", elements="str", required=False, default=[]),
         groups=dict(type="list", elements="str", required=False, default=[])
     )
@@ -122,13 +146,21 @@ def run_module():
     if module.check_mode:
         module.exit_json(**result)
 
+    gws = GoogleWorkspaceUserHelper(module)
+    result_action = {
+        "changed": False,
+        "failed": False,
+        "message": []
+    }
 
-    gws = GoogleWorkspaceHelper(module)
-    result_signature = gws.apply_signature()
+    if module.params['action'] == "signature":
+        result_action = gws.set_signature()
+    if module.params['action'] == "signout":
+        result_action = gws.signout()
 
-    result['message'] = result_signature["message"]
-    result['changed'] = result_signature["changed"]
-    result['failed'] = result_signature["failed"]
+    result['message'] = result_action["message"]
+    result['changed'] = result_action["changed"]
+    result['failed'] = result_action["failed"]
 
 
     # during the execution of the module, if there is an exception or a

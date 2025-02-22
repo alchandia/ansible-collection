@@ -55,8 +55,9 @@ author:
 '''
 
 EXAMPLES = r'''
-- name: Test module
+- name: Test check action
     i2btech.ops.gws_group_management:
+    action: "check"
     groups_definition: "{{ gws_groups }}"
     groups_types: "{{ gws_group_types }}"
     group:

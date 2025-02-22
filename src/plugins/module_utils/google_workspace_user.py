@@ -1,5 +1,5 @@
 """
-Util class for google_workspace
+Util class for google_workspace_user
 """
 
 from __future__ import (absolute_import, division, print_function)
@@ -8,39 +8,22 @@ __metaclass__ = type
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
 from jinja2 import Environment, FileSystemLoader
+from ansible_collections.i2btech.ops.plugins.module_utils.google_workspace_group import GoogleWorkspaceGroupHelper
 
 #
-# class: GoogleWorkspaceHelper
+# class: GoogleWorkspaceUserHelper
 #
 
-class GoogleWorkspaceHelper:
+class GoogleWorkspaceUserHelper:
     """
-    Class GoogleWorkspaceHelper
+    Class GoogleWorkspaceUserHelper
     """
 
     def __init__(self, module):
         self.module = module
 
 
-    def get_group_members(self, group, service):
-
-        results = (
-            service.members()
-            .list(groupKey=group)
-            .execute()
-        )
-        members = results.get("members", [])
-        user_list = []
-        if not members:
-            user_list = [None]
-        else:
-            for member in members:
-                user_list.append(member['email'])
-
-        return user_list
-
-
-    def signout_users(self):
+    def signout(self):
 
         result_signout = {
             "changed": False,
@@ -57,7 +40,7 @@ class GoogleWorkspaceHelper:
 
         if self.module.params['groups'] is not None:
             for group in self.module.params['groups']:
-                users_from_groups = users_from_groups + self.get_group_members(group, service_members)
+                users_from_groups = GoogleWorkspaceGroupHelper.get_members(self, group, service_members)
 
         target_scopes_security = ["https://www.googleapis.com/auth/admin.directory.user.security"]
         credentials_security = service_account.Credentials.from_service_account_file(
@@ -103,7 +86,7 @@ class GoogleWorkspaceHelper:
         return rendered_string
 
 
-    def apply_signature(self):
+    def set_signature(self):
 
         result_signature = {
             "changed": False,
@@ -113,7 +96,7 @@ class GoogleWorkspaceHelper:
 
         # get users from current groups
         users_from_groups = []
-        for group in self.module.params['current_groups']:
+        for group in self.module.params['groups_definition']:
             if group['mail'] in self.module.params['groups']:
                 users_from_groups = users_from_groups + group['members']
 
@@ -126,7 +109,7 @@ class GoogleWorkspaceHelper:
                 try:
                     # iterate over list of all current users if use that need to be updated
                     # exist, apply change
-                    for current_user in self.module.params['current_users']:
+                    for current_user in self.module.params['users_definition']:
                         if current_user['mail'] == user:
 
                             # auth google
