@@ -111,7 +111,10 @@ class GoogleWorkspaceGroupHelper:
 
         result = {}
         # auth google
-        target_scopes = ["https://www.googleapis.com/auth/admin.directory.group"]
+        target_scopes = [
+            "https://www.googleapis.com/auth/admin.directory.group",
+            "https://www.googleapis.com/auth/admin.directory.group.member"
+        ]
         credentials = service_account.Credentials.from_service_account_file(
             self.module.params['credential_file'],
             scopes=target_scopes,
@@ -130,13 +133,13 @@ class GoogleWorkspaceGroupHelper:
             else:
                 IF_EXIST_RES=self.check_if_exists(service, group)
                 if IF_EXIST_RES == "TRUE":
-                    result = self.update()
+                    result = self.update(service, group_definition)
                 elif IF_EXIST_RES == "FALSE":
                     result = self.create(service, group_definition)
                 else:
                     result = {
                         "changed": False,
-                        "failed": False,
+                        "failed": True,
                         "message": IF_EXIST_RES
                     }
 
@@ -166,12 +169,33 @@ class GoogleWorkspaceGroupHelper:
         return result
 
 
-    def update(self):
+    def update(self, service, group):
         result = {
             "changed": False,
             "failed": False,
             "message": []
         }
+
+        definition_members = group["members"] if "members" in group else []
+        current_members = []
+        try:
+            results = (
+                service.members()
+                .list(groupKey=group["mail"])
+                .execute()
+            )
+            if "members" in results:
+                for member in results["members"]:
+                    current_members.append(member["email"])
+
+            for deleted in set(current_members).difference(definition_members):
+                result["message"].append(deleted) # estos se borran
+            for added in set(definition_members).difference(current_members):
+                result["message"].append(added) # estos se agregan        
+
+        except Exception as error:
+            result["failed"] = True
+            result["message"].append(str(error))
 
         return result
 
