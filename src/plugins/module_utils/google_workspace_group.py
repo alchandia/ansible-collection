@@ -109,7 +109,11 @@ class GoogleWorkspaceGroupHelper:
 
     def create_update(self):
 
-        result = {}
+        result = {
+            "changed": False,
+            "failed": False,
+            "message": []
+        }
         # auth google
         target_scopes = [
             "https://www.googleapis.com/auth/admin.directory.group",
@@ -119,34 +123,49 @@ class GoogleWorkspaceGroupHelper:
             self.module.params['credential_file'],
             scopes=target_scopes,
             subject=self.module.params['used_by'])
-        service = build("admin", "directory_v1", credentials=credentials)
+        service_directory = build("admin", "directory_v1", credentials=credentials)
 
-        for group in self.module.params['groups']:
+        # auth google
+        target_scopes = [
+            "https://www.googleapis.com/auth/admin.directory.group",
+            "https://www.googleapis.com/auth/apps.groups.settings",
+        ]
+        credentials = service_account.Credentials.from_service_account_file(
+            self.module.params['credential_file'],
+            scopes=target_scopes)
+        service_grp_settings = build("groupssettings", "v1", credentials=credentials)
+
+        # get list of group that need to be created/updated
+        action_groups = self.module.params['groups'] if "groups" in self.module.params else []
+        for group in action_groups:
+
             # get detail of group from list
             group_definition = next((sub for sub in self.module.params['groups_definition'] if sub['mail'] == group), None)
             if group_definition is None:
-                result = {
-                    "changed": False,
-                    "failed": True,
-                    "message": "Group definition don't exist"
-                }
+                result["failed"] = True
+                result["message"] = "Group definition don't exist"
+                break
+
+            # get detail of group type
+            type_definition = next((sub for sub in self.module.params['groups_types'] if sub['name'] == group_definition["type"]), None)
+            if type_definition is None:
+                result["failed"] = True
+                result["message"] = "Type definition don't exist"
+                break
+
+            IF_EXIST_RES=self.check_if_exists(service_directory, group)
+            if IF_EXIST_RES == "TRUE":
+                result = self.update(service_directory, group_definition, type_definition, service_grp_settings)
+            elif IF_EXIST_RES == "FALSE":
+                result = self.create(service_directory, group_definition, type_definition, service_grp_settings)
             else:
-                IF_EXIST_RES=self.check_if_exists(service, group)
-                if IF_EXIST_RES == "TRUE":
-                    result = self.update(service, group_definition)
-                elif IF_EXIST_RES == "FALSE":
-                    result = self.create(service, group_definition)
-                else:
-                    result = {
-                        "changed": False,
-                        "failed": True,
-                        "message": IF_EXIST_RES
-                    }
+                result["failed"] = True
+                result["message"] = IF_EXIST_RES
 
         return result
  
 
-    def create(self, service, group):
+    def create(self, service_directory, group, type, service_grp_settings):
         result = {
             "changed": False,
             "failed": False,
@@ -158,13 +177,19 @@ class GoogleWorkspaceGroupHelper:
                 "name": group["name"],
                 "description": group["description"]
             }
-            service.groups().insert(body=body_info).execute()
+            service_directory.groups().insert(body=body_info).execute()
             result["changed"] = True
 
-            # agrega usuarios a grupo
+            # apply settings
+            service_grp_settings.groups().patch(
+                groupUniqueId=group["mail"],
+                body=type["settings"][0]
+            ).execute()
+
+            # add users
             definition_members = group["members"] if "members" in group else []
             for user in definition_members:
-                res = self.member_insert_delete("insert", service, group["mail"], user)
+                res = self.member_insert_delete("insert", service_directory, group["mail"], user)
                 if res != "OK":
                     result["failed"] = True
                     result["message"].append(user + ": " + res)
@@ -176,30 +201,29 @@ class GoogleWorkspaceGroupHelper:
         return result
 
 
-    def update(self, service, group):
+    def update(self, service_directory, group, type, service_grp_settings):
         result = {
             "changed": False,
             "failed": False,
             "message": []
         }
-
         try:
+            # update name, description and settings
+            type["settings"][0]["name"] = group["name"]
+            type["settings"][0]["description"] = group["description"]
 
-            # update name or description
-            body_info = {
-                "name": group["name"],
-                "description": group["description"]
-            }
-            service.groups().update(
-                groupKey=group["mail"],
-                body=body_info
-                ).execute()
+            service_grp_settings.groups().patch(
+                groupUniqueId=group["mail"],
+                body=type["settings"][0]
+            ).execute()
+            # TODO: need to validate if settings where actually changed
+            result["changed"] = True
 
             # add or remove users
             definition_members = group["members"] if "members" in group else []
             current_members = []
             results = (
-                service.members()
+                service_directory.members()
                 .list(groupKey=group["mail"])
                 .execute()
             )
@@ -209,7 +233,7 @@ class GoogleWorkspaceGroupHelper:
 
             # this add
             for deleted in set(current_members).difference(definition_members):
-                res = self.member_insert_delete("delete", service, group["mail"], deleted)
+                res = self.member_insert_delete("delete", service_directory, group["mail"], deleted)
                 if res != "OK":
                     result["failed"] = True
                     result["message"].append(deleted + ": " + res)
@@ -218,7 +242,7 @@ class GoogleWorkspaceGroupHelper:
 
             # this delete
             for added in set(definition_members).difference(current_members):
-                res = self.member_insert_delete("insert", service, group["mail"], added)
+                res = self.member_insert_delete("insert", service_directory, group["mail"], added)
                 if res != "OK":
                     result["failed"] = True
                     result["message"].append(added + ": " + res)

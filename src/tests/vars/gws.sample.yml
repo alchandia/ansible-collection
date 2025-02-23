@@ -36,6 +36,7 @@ gws_group_types:
         whoCanContactOwner: "ALL_IN_DOMAIN_CAN_CONTACT"
         whoCanViewGroup: "ALL_MEMBERS_CAN_VIEW"
         whoCanPostMessage: "ANYONE_CAN_POST"
+        # messageModerationLevel: "MODERATE_NON_MEMBERS" # recomendación de la doc
   - name: private # only group members
     settings:
       - whoCanJoin: "INVITED_CAN_JOIN"
