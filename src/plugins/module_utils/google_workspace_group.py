@@ -8,6 +8,7 @@ __metaclass__ = type
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
 from googleapiclient import errors
+import time
 
 #
 # class: GoogleWorkspaceGroupHelper
@@ -180,19 +181,37 @@ class GoogleWorkspaceGroupHelper:
             service_directory.groups().insert(body=body_info).execute()
             result["changed"] = True
 
-            # apply settings
-            service_grp_settings.groups().patch(
-                groupUniqueId=group["mail"],
-                body=type["settings"][0]
-            ).execute()
+            # wait for group to be active after creation
+            for i in range(0,6):
+                time.sleep(5)
+                results_new_group_settings = (
+                    service_grp_settings.groups()
+                    .get(groupUniqueId=group["mail"])
+                    .execute()
+                )
+                if results_new_group_settings["archiveOnly"] == "false":
+                    GROUP_ACTIVE = True
+                    break
+                else:
+                    GROUP_ACTIVE = False
 
-            # add users
-            definition_members = group["members"] if "members" in group else []
-            for user in definition_members:
-                res = self.member_insert_delete("insert", service_directory, group["mail"], user)
-                if res != "OK":
-                    result["failed"] = True
-                    result["message"].append(user + ": " + res)
+            if GROUP_ACTIVE:
+                # apply settings
+                service_grp_settings.groups().patch(
+                    groupUniqueId=group["mail"],
+                    body=type["settings"][0]
+                ).execute()
+
+                # add users
+                definition_members = group["members"] if "members" in group else []
+                for user in definition_members:
+                    res = self.member_insert_delete("insert", service_directory, group["mail"], user)
+                    if res != "OK":
+                        result["failed"] = True
+                        result["message"].append(user + ": " + res)
+            else:
+                result['failed'] = True
+                result["message"].append(group["mail"] + ": group created but was not activated")
 
         except Exception as error:
             result['failed'] = True
