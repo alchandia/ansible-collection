@@ -145,23 +145,30 @@ class GoogleWorkspaceGroupHelper:
 
         return result
  
-    # Create group
-    def create(self, service, group_definition):
+
+    def create(self, service, group):
         result = {
             "changed": False,
             "failed": False,
             "message": []
         }
         try:
-            body_info = {}
             body_info = {
-                "email": group_definition["mail"],
-                "name": group_definition["name"],
-                "description": group_definition["description"]
+                "email": group["mail"],
+                "name": group["name"],
+                "description": group["description"]
             }
             service.groups().insert(body=body_info).execute()
             result["changed"] = True
-            result["message"] = "Group created"
+
+            # agrega usuarios a grupo
+            definition_members = group["members"] if "members" in group else []
+            for user in definition_members:
+                res = self.member_insert_delete("insert", service, group["mail"], user)
+                if res != "OK":
+                    result["failed"] = True
+                    result["message"].append(user + ": " + res)
+
         except Exception as error:
             result['failed'] = True
             result["message"] = error
@@ -176,9 +183,21 @@ class GoogleWorkspaceGroupHelper:
             "message": []
         }
 
-        definition_members = group["members"] if "members" in group else []
-        current_members = []
         try:
+
+            # update name or description
+            body_info = {
+                "name": group["name"],
+                "description": group["description"]
+            }
+            service.groups().update(
+                groupKey=group["mail"],
+                body=body_info
+                ).execute()
+
+            # add or remove users
+            definition_members = group["members"] if "members" in group else []
+            current_members = []
             results = (
                 service.members()
                 .list(groupKey=group["mail"])
@@ -188,19 +207,23 @@ class GoogleWorkspaceGroupHelper:
                 for member in results["members"]:
                     current_members.append(member["email"])
 
-            # estos se borran
+            # this add
             for deleted in set(current_members).difference(definition_members):
                 res = self.member_insert_delete("delete", service, group["mail"], deleted)
                 if res != "OK":
                     result["failed"] = True
                     result["message"].append(deleted + ": " + res)
+                else:
+                    result["changed"] = True
 
-            # estos se agregan
+            # this delete
             for added in set(definition_members).difference(current_members):
                 res = self.member_insert_delete("insert", service, group["mail"], added)
                 if res != "OK":
                     result["failed"] = True
                     result["message"].append(added + ": " + res)
+                else:
+                    result["changed"] = True
 
         except Exception as error:
             result["failed"] = True
@@ -227,6 +250,7 @@ class GoogleWorkspaceGroupHelper:
             result = str(error)
 
         return result
+
 
     def member_insert_delete(self, action, service, group, member):
         result = "ERROR"
