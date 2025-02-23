@@ -188,10 +188,19 @@ class GoogleWorkspaceGroupHelper:
                 for member in results["members"]:
                     current_members.append(member["email"])
 
+            # estos se borran
             for deleted in set(current_members).difference(definition_members):
-                result["message"].append(deleted) # estos se borran
+                res = self.member_insert_delete("delete", service, group["mail"], deleted)
+                if res != "OK":
+                    result["failed"] = True
+                    result["message"].append(deleted + ": " + res)
+
+            # estos se agregan
             for added in set(definition_members).difference(current_members):
-                result["message"].append(added) # estos se agregan        
+                res = self.member_insert_delete("insert", service, group["mail"], added)
+                if res != "OK":
+                    result["failed"] = True
+                    result["message"].append(added + ": " + res)
 
         except Exception as error:
             result["failed"] = True
@@ -214,6 +223,31 @@ class GoogleWorkspaceGroupHelper:
                 result = "FALSE"
             else:
                 result = str(error.error_details)
+        except Exception as error:
+            result = str(error)
+
+        return result
+
+    def member_insert_delete(self, action, service, group, member):
+        result = "ERROR"
+        try:
+            if action == "insert":
+                # TODO: insert method don't fail if the user don't exists
+                body_member = {
+                    "email": member
+                }
+                service.members().insert(
+                    groupKey=group,
+                    body=body_member
+                ).execute()
+                result = "OK"
+            if action == "delete":
+                service.members().delete(
+                        groupKey=group,
+                        memberKey=member
+                    ).execute()
+                result = "OK"
+
         except Exception as error:
             result = str(error)
 
