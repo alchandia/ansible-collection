@@ -149,3 +149,28 @@ class GoogleWorkspaceUserHelper:
             result_signature['message'].append("Signatures updated")
 
         return result_signature
+
+    def create_update(self):
+        result = {
+            "changed": False,
+            "failed": False,
+            "message": []
+        }
+
+        # get list of users that need to be created/updated
+        action_users = self.module.params['users'] if "users" in self.module.params else []
+        for user in action_users:
+
+            # TODO: check if users exists or not and create or update
+
+            # get list of groups to define to which ones the user need to be added
+            groups_definition = self.module.params['groups_definition'] if "groups_definition" in self.module.params else []
+            for group in groups_definition:
+                members_list = group['members'] if "members" in group else []
+                if user in members_list:
+
+                   # TODO: add to group
+
+                   result['message'].append(user + ": " + group["mail"])
+
+        return result

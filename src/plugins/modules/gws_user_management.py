@@ -94,6 +94,14 @@ EXAMPLES = r'''
     groups:
         - "group.users@i2btech.com"
     tags: signature
+- name: Test action create_update
+    i2btech.ops.gws_user_management:
+    action: "create_update"
+    users_definition: "{{ gws_users }}"
+    groups_definition: "{{ gws_groups }}"
+    users:
+        - "user.name@i2btech.com"
+    tags: create_update
 '''
 
 RETURN = r'''
@@ -157,6 +165,8 @@ def run_module():
         result_action = gws.set_signature()
     if module.params['action'] == "signout":
         result_action = gws.signout()
+    if module.params['action'] == "create_update":
+        result_action = gws.create_update()
 
     result['message'] = result_action["message"]
     result['changed'] = result_action["changed"]
