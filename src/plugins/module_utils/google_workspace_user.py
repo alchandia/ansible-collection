@@ -162,7 +162,8 @@ class GoogleWorkspaceUserHelper:
         # auth google
         target_scopes = [
             "https://www.googleapis.com/auth/admin.directory.user",
-            "https://www.googleapis.com/auth/admin.directory.group.member"
+            "https://www.googleapis.com/auth/admin.directory.group.member",
+            "https://www.googleapis.com/auth/admin.directory.group"
         ]
         credentials = service_account.Credentials.from_service_account_file(
             self.module.params['credential_file'],
@@ -191,7 +192,7 @@ class GoogleWorkspaceUserHelper:
 
             IF_EXIST_RES=self.check_if_exists(service_directory, user)
             if IF_EXIST_RES == "TRUE":
-                result = self.update()
+                result = self.update(service_directory, user_definition, groups_to_be_added)
             elif IF_EXIST_RES == "FALSE":
                 result = self.create(service_directory, user_definition, groups_to_be_added)
             else:
@@ -261,11 +262,61 @@ class GoogleWorkspaceUserHelper:
         return result
 
 
-    def update(self):
+    def update(self, service_directory, user, groups_to_be_added):
         result = {
             "changed": False,
             "failed": False,
             "message": []
         }
+        try:
+            body_info = {
+                "primaryEmail": user["mail"],
+                "changePasswordAtNextLogin": "false",
+                "name": {
+                    "fullName": user["full_name"],
+                    "familyName": user["last_name"],
+                    "givenName": user["first_name"],
+                    "displayName": user["full_name"]
+                }
+            }
+            res = service_directory.users().update(
+                userKey=user["mail"],
+                body=body_info
+                ).execute()
+            # TODO: need to validate if options where actually changed
+            result["changed"] = True
+
+            # get current memberships
+            current_memberships = []
+            results = (
+                service_directory.groups()
+                .list(userKey=user["mail"])
+                .execute()
+            )
+            if "groups" in results:
+                for group in results["groups"]:
+                    current_memberships.append(group["email"])
+
+            # delete memberships
+            for deleted in set(current_memberships).difference(groups_to_be_added):
+                res = GoogleWorkspaceGroupHelper.member_insert_delete(self, "delete", service_directory, deleted, user["mail"])
+                if res != "OK":
+                    result["failed"] = True
+                    result["message"].append(deleted + ": " + res)
+                else:
+                    result["changed"] = True
+
+            # add memberships
+            for added in set(groups_to_be_added).difference(current_memberships):
+                res = GoogleWorkspaceGroupHelper.member_insert_delete(self, "insert", service_directory, added, user["mail"])
+                if res != "OK":
+                    result["failed"] = True
+                    result["message"].append(added + ": " + res)
+                else:
+                    result["changed"] = True
+
+        except Exception as error:
+            result["failed"] = True
+            result["message"].append(str(error))
 
         return result
