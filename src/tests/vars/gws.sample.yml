@@ -2,11 +2,17 @@
 gws_users:
   - mail: user.name@i2btech.com
     full_name: "User Name"
+    first_name: "User"
+    last_name: "Name"
+    password: "__super_secret__"
     title: "Consultor"
     signature: "chile"
     phone: "555 55555"
   - mail: other.user@i2btech.com
     full_name: "Other User"
+    first_name: "Other"
+    last_name: "User"
+    password: "__super_secret__"
     title: "Consultor"
     signature: "colombia"
 

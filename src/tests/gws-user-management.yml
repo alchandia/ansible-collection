@@ -38,6 +38,7 @@
         action: "create_update"
         users_definition: "{{ gws_users }}"
         groups_definition: "{{ gws_groups }}"
+        used_by: "admin@i2btech.com"
         users:
           - "user.name@i2btech.com"
       tags: create_update

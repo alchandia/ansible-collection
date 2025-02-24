@@ -238,8 +238,10 @@ class GoogleWorkspaceGroupHelper:
             # TODO: need to validate if settings where actually changed
             result["changed"] = True
 
-            # add or remove users
+            # get defined members
             definition_members = group["members"] if "members" in group else []
+
+            # get current members
             current_members = []
             results = (
                 service_directory.members()
@@ -250,7 +252,7 @@ class GoogleWorkspaceGroupHelper:
                 for member in results["members"]:
                     current_members.append(member["email"])
 
-            # this add
+            # add members
             for deleted in set(current_members).difference(definition_members):
                 res = self.member_insert_delete("delete", service_directory, group["mail"], deleted)
                 if res != "OK":
@@ -259,7 +261,7 @@ class GoogleWorkspaceGroupHelper:
                 else:
                     result["changed"] = True
 
-            # this delete
+            # delete members
             for added in set(definition_members).difference(current_members):
                 res = self.member_insert_delete("insert", service_directory, group["mail"], added)
                 if res != "OK":

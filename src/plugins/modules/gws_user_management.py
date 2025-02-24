@@ -97,6 +97,7 @@ EXAMPLES = r'''
 - name: Test action create_update
     i2btech.ops.gws_user_management:
     action: "create_update"
+    used_by: "admin@i2btech.com"
     users_definition: "{{ gws_users }}"
     groups_definition: "{{ gws_groups }}"
     users:

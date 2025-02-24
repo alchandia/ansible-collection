@@ -8,7 +8,9 @@ __metaclass__ = type
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
 from jinja2 import Environment, FileSystemLoader
+from googleapiclient import errors
 from ansible_collections.i2btech.ops.plugins.module_utils.google_workspace_group import GoogleWorkspaceGroupHelper
+import time
 
 #
 # class: GoogleWorkspaceUserHelper
@@ -157,20 +159,113 @@ class GoogleWorkspaceUserHelper:
             "message": []
         }
 
+        # auth google
+        target_scopes = [
+            "https://www.googleapis.com/auth/admin.directory.user",
+            "https://www.googleapis.com/auth/admin.directory.group.member"
+        ]
+        credentials = service_account.Credentials.from_service_account_file(
+            self.module.params['credential_file'],
+            scopes=target_scopes,
+            subject=self.module.params['used_by'])
+        service_directory = build("admin", "directory_v1", credentials=credentials)
+
         # get list of users that need to be created/updated
         action_users = self.module.params['users'] if "users" in self.module.params else []
         for user in action_users:
 
-            # TODO: check if users exists or not and create or update
+            # get detail of user from list
+            user_definition = next((sub for sub in self.module.params['users_definition'] if sub['mail'] == user), None)
+            if user_definition is None:
+                result["failed"] = True
+                result["message"] = "User definition don't exist"
+                break
 
             # get list of groups to define to which ones the user need to be added
             groups_definition = self.module.params['groups_definition'] if "groups_definition" in self.module.params else []
+            groups_to_be_added = []
             for group in groups_definition:
                 members_list = group['members'] if "members" in group else []
                 if user in members_list:
+                   groups_to_be_added.append(group["mail"])
 
-                   # TODO: add to group
+            IF_EXIST_RES=self.check_if_exists(service_directory, user)
+            if IF_EXIST_RES == "TRUE":
+                result = self.update()
+            elif IF_EXIST_RES == "FALSE":
+                result = self.create(service_directory, user_definition, groups_to_be_added)
+            else:
+                result["failed"] = True
+                result["message"] = IF_EXIST_RES
 
-                   result['message'].append(user + ": " + group["mail"])
+        return result
+
+    def check_if_exists(self, service, user):
+        result = "NONE"
+        try:
+            results = (
+                service.users()
+                .get(userKey=user)
+                .execute()
+            )
+            result = "TRUE"
+        except errors.HttpError as error:
+            if str(error.status_code) == "404":
+                result = "FALSE"
+            else:
+                result = str(error.error_details)
+        except Exception as error:
+            result = str(error)
+
+        return result
+
+
+    def create(self, service_directory, user, groups):
+        result = {
+            "changed": False,
+            "failed": False,
+            "message": []
+        }
+        try:
+            body_info = {
+                "primaryEmail": user["mail"],
+                "password": user["password"],
+                "changePasswordAtNextLogin": "false",
+                "name": {
+                    "fullName": user["full_name"],
+                    "familyName": user["last_name"],
+                    "givenName": user["first_name"],
+                    "displayName": user["full_name"]
+                }
+            }
+            service_directory.users().insert(body=body_info).execute()
+            result["changed"] = True
+
+            # TODO: existe opcion archived en body de usuario (Indicates if user is archived.)
+            # será igual q el grupo?, se crea en modo archived y hay q esperar la activación?
+            time.sleep(5)
+
+            # add to groups
+            for group in groups:
+                res = GoogleWorkspaceGroupHelper.member_insert_delete(self, "insert", service_directory, group, user["mail"])
+                if res != "OK":
+                    result["failed"] = True
+                    result["message"].append(user["mail"] + ": " + res)
+                else:
+                    result["changed"] = True
+
+        except Exception as error:
+            result['failed'] = True
+            result["message"] = error
+
+        return result
+
+
+    def update(self):
+        result = {
+            "changed": False,
+            "failed": False,
+            "message": []
+        }
 
         return result

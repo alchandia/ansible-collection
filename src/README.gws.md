@@ -13,3 +13,4 @@
 - examples
     - https://dev.to/osinachiuro/implement-admin-sdk-directory-api-for-google-workspace-management-37nd
     - https://aravind-ramaiahk.medium.com/extracting-google-cloud-groups-and-its-members-using-admin-sdk-directory-api-29acc761d084
+    - https://stackoverflow.com/questions/24153960/google-admin-sdk-get-a-list-of-groups-that-a-user-belongs-to
